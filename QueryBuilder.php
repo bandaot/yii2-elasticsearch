@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
@@ -17,21 +18,19 @@ use yii\helpers\Json;
  * @author Carsten Brandt <mail@cebe.cc>
  * @since 2.0
  */
-class QueryBuilder extends \yii\base\Object
-{
+class QueryBuilder extends \yii\base\Object {
+
     /**
      * @var Connection the database connection.
      */
     public $db;
-
 
     /**
      * Constructor.
      * @param Connection $connection the database connection.
      * @param array $config name-value pairs that will be used to initialize the object properties
      */
-    public function __construct($connection, $config = [])
-    {
+    public function __construct($connection, $config = []) {
         $this->db = $connection;
         parent::__construct($config);
     }
@@ -42,8 +41,7 @@ class QueryBuilder extends \yii\base\Object
      * @return array the generated SQL statement (the first array element) and the corresponding
      * parameters to be bound to the SQL statement (the second array element).
      */
-    public function build($query)
-    {
+    public function build($query) {
         $parts = [];
 
         if ($query->fields === []) {
@@ -51,7 +49,7 @@ class QueryBuilder extends \yii\base\Object
         } elseif ($query->fields !== null) {
             $fields = [];
             $scriptFields = [];
-            foreach($query->fields as $key => $field) {
+            foreach ($query->fields as $key => $field) {
                 if (is_int($key)) {
                     $fields[] = $field;
                 } else {
@@ -132,8 +130,7 @@ class QueryBuilder extends \yii\base\Object
     /**
      * adds order by condition to the query
      */
-    public function buildOrderBy($columns)
-    {
+    public function buildOrderBy($columns) {
         if (empty($columns)) {
             return [];
         }
@@ -168,8 +165,7 @@ class QueryBuilder extends \yii\base\Object
      * @throws \yii\base\NotSupportedException if string conditions are used in where
      * @return string the generated SQL expression
      */
-    public function buildCondition($condition)
-    {
+    public function buildCondition($condition) {
         static $builders = [
             'not' => 'buildNotCondition',
             'and' => 'buildAndCondition',
@@ -182,6 +178,8 @@ class QueryBuilder extends \yii\base\Object
             'not like' => 'buildLikeCondition',
             'or like' => 'buildLikeCondition',
             'or not like' => 'buildLikeCondition',
+            'match' => 'buildMatchCondition',
+            'range' => 'buildRangeCondition',
         ];
 
         if (empty($condition)) {
@@ -201,13 +199,11 @@ class QueryBuilder extends \yii\base\Object
                 throw new InvalidParamException('Found unknown operator in query: ' . $operator);
             }
         } else { // hash format: 'column1' => 'value1', 'column2' => 'value2', ...
-
             return $this->buildHashCondition($condition);
         }
     }
 
-    private function buildHashCondition($condition)
-    {
+    private function buildHashCondition($condition) {
         $parts = [];
         foreach ($condition as $attribute => $value) {
             if ($attribute == '_id') {
@@ -232,8 +228,7 @@ class QueryBuilder extends \yii\base\Object
         return count($parts) === 1 ? $parts[0] : ['and' => $parts];
     }
 
-    private function buildNotCondition($operator, $operands)
-    {
+    private function buildNotCondition($operator, $operands) {
         if (count($operands) != 1) {
             throw new InvalidParamException("Operator '$operator' requires exactly one operand.");
         }
@@ -246,8 +241,7 @@ class QueryBuilder extends \yii\base\Object
         return [$operator => $operand];
     }
 
-    private function buildAndCondition($operator, $operands)
-    {
+    private function buildAndCondition($operator, $operands) {
         $parts = [];
         foreach ($operands as $operand) {
             if (is_array($operand)) {
@@ -264,8 +258,7 @@ class QueryBuilder extends \yii\base\Object
         }
     }
 
-    private function buildBetweenCondition($operator, $operands)
-    {
+    private function buildBetweenCondition($operator, $operands) {
         if (!isset($operands[0], $operands[1], $operands[2])) {
             throw new InvalidParamException("Operator '$operator' requires three operands.");
         }
@@ -282,8 +275,21 @@ class QueryBuilder extends \yii\base\Object
         return $filter;
     }
 
-    private function buildInCondition($operator, $operands)
-    {
+    private function buildRangeCondition($operator, $operands) {
+        if (!isset($operands[0], $operands[1], $operands[2])) {
+            throw new InvalidParamException("Operator '$operator' requires three operands.");
+        }
+
+        list( $operator, $column, $value) = $operands;
+        if ($column == '_id') {
+            throw new NotSupportedException('Between condition is not supported for the _id field.');
+        }
+        $filter = ['range' => [$column => [$operator => $value]]];
+
+        return $filter;
+    }
+
+    private function buildInCondition($operator, $operands) {
         if (!isset($operands[0], $operands[1])) {
             throw new InvalidParamException("Operator '$operator' requires two operands.");
         }
@@ -337,13 +343,12 @@ class QueryBuilder extends \yii\base\Object
         return $filter;
     }
 
-    protected function buildCompositeInCondition($operator, $columns, $values)
-    {
+    protected function buildCompositeInCondition($operator, $columns, $values) {
         throw new NotSupportedException('composite in is not supported by elasticsearch.');
     }
 
-    private function buildLikeCondition($operator, $operands)
-    {
+    private function buildLikeCondition($operator, $operands) {
         throw new NotSupportedException('like conditions are not supported by elasticsearch.');
     }
+
 }

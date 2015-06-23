@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
@@ -52,13 +53,12 @@ use yii\helpers\StringHelper;
  * @author Carsten Brandt <mail@cebe.cc>
  * @since 2.0
  */
-class ActiveRecord extends BaseActiveRecord
-{
+class ActiveRecord extends BaseActiveRecord {
+
     private $_id;
     private $_score;
     private $_version;
     private $_highlight;
-
 
     /**
      * Returns the database connection used by this AR class.
@@ -66,8 +66,7 @@ class ActiveRecord extends BaseActiveRecord
      * You may override this method if you want to use a different database connection.
      * @return Connection the database connection used by this AR class.
      */
-    public static function getDb()
-    {
+    public static function getDb() {
         return \Yii::$app->get('elasticsearch');
     }
 
@@ -75,16 +74,14 @@ class ActiveRecord extends BaseActiveRecord
      * @inheritdoc
      * @return ActiveQuery the newly created [[ActiveQuery]] instance.
      */
-    public static function find()
-    {
+    public static function find() {
         return Yii::createObject(ActiveQuery::className(), [get_called_class()]);
     }
 
     /**
      * @inheritdoc
      */
-    public static function findOne($condition)
-    {
+    public static function findOne($condition) {
         $query = static::find();
         if (is_array($condition)) {
             return $query->andWhere($condition)->one();
@@ -96,8 +93,7 @@ class ActiveRecord extends BaseActiveRecord
     /**
      * @inheritdoc
      */
-    public static function findAll($condition)
-    {
+    public static function findAll($condition) {
         $query = static::find();
         if (ArrayHelper::isAssociative($condition)) {
             return $query->andWhere($condition)->all();
@@ -116,8 +112,7 @@ class ActiveRecord extends BaseActiveRecord
      * for more details on these options.
      * @return static|null The record instance or null if it was not found.
      */
-    public static function get($primaryKey, $options = [])
-    {
+    public static function get($primaryKey, $options = []) {
         if ($primaryKey === null) {
             return null;
         }
@@ -145,8 +140,7 @@ class ActiveRecord extends BaseActiveRecord
      * for more details on these options.
      * @return array The record instances, or empty array if nothing was found
      */
-    public static function mget(array $primaryKeys, $options = [])
-    {
+    public static function mget(array $primaryKeys, $options = []) {
         if (empty($primaryKeys)) {
             return [];
         }
@@ -171,24 +165,20 @@ class ActiveRecord extends BaseActiveRecord
     }
 
     // TODO add more like this feature http://www.elastic.co/guide/en/elasticsearch/reference/current/search-more-like-this.html
-
     // TODO add percolate functionality http://www.elastic.co/guide/en/elasticsearch/reference/current/search-percolate.html
-
     // TODO implement copy and move as pk change is not possible
 
     /**
      * @return float returns the score of this record when it was retrieved via a [[find()]] query.
      */
-    public function getScore()
-    {
+    public function getScore() {
         return $this->_score;
     }
 
     /**
      * @return array|null A list of arrays with highlighted excerpts indexed by field names.
      */
-    public function getHighlight()
-    {
+    public function getHighlight() {
         return $this->_highlight;
     }
 
@@ -197,8 +187,7 @@ class ActiveRecord extends BaseActiveRecord
      * @param mixed $value
      * @throws \yii\base\InvalidCallException when record is not new
      */
-    public function setPrimaryKey($value)
-    {
+    public function setPrimaryKey($value) {
         $pk = static::primaryKey()[0];
         if ($this->getIsNewRecord() || $pk != '_id') {
             $this->$pk = $value;
@@ -210,8 +199,7 @@ class ActiveRecord extends BaseActiveRecord
     /**
      * @inheritdoc
      */
-    public function getPrimaryKey($asArray = false)
-    {
+    public function getPrimaryKey($asArray = false) {
         $pk = static::primaryKey()[0];
         if ($asArray) {
             return [$pk => $this->$pk];
@@ -223,8 +211,7 @@ class ActiveRecord extends BaseActiveRecord
     /**
      * @inheritdoc
      */
-    public function getOldPrimaryKey($asArray = false)
-    {
+    public function getOldPrimaryKey($asArray = false) {
         $pk = static::primaryKey()[0];
         if ($this->getIsNewRecord()) {
             $id = null;
@@ -256,8 +243,7 @@ class ActiveRecord extends BaseActiveRecord
      *
      * @return string[] array of primary key attributes. Only the first element of the array will be used.
      */
-    public static function primaryKey()
-    {
+    public static function primaryKey() {
         return ['_id'];
     }
 
@@ -274,8 +260,7 @@ class ActiveRecord extends BaseActiveRecord
      * @return string[] list of attribute names.
      * @throws \yii\base\InvalidConfigException if not overridden in a child class.
      */
-    public function attributes()
-    {
+    public function attributes() {
         throw new InvalidConfigException('The attributes() method of elasticsearch ActiveRecord has to be implemented by child classes.');
     }
 
@@ -287,24 +272,21 @@ class ActiveRecord extends BaseActiveRecord
      *
      * @return string[] list of attribute names. Must be a subset of [[attributes()]].
      */
-    public function arrayAttributes()
-    {
+    public function arrayAttributes() {
         return [];
     }
 
     /**
      * @return string the name of the index this record is stored in.
      */
-    public static function index()
-    {
+    public static function index() {
         return Inflector::pluralize(Inflector::camel2id(StringHelper::basename(get_called_class()), '-'));
     }
 
     /**
      * @return string the name of the type of this record.
      */
-    public static function type()
-    {
+    public static function type() {
         return Inflector::camel2id(StringHelper::basename(get_called_class()), '-');
     }
 
@@ -315,8 +297,7 @@ class ActiveRecord extends BaseActiveRecord
      * created by [[instantiate()]] beforehand.
      * @param array $row attribute values (name => value)
      */
-    public static function populateRecord($record, $row)
-    {
+    public static function populateRecord($record, $row) {
         $attributes = [];
         if (isset($row['_source'])) {
             $attributes = $row['_source'];
@@ -324,7 +305,7 @@ class ActiveRecord extends BaseActiveRecord
         if (isset($row['fields'])) {
             // reset fields in case it is scalar value
             $arrayAttributes = $record->arrayAttributes();
-            foreach($row['fields'] as $key => $value) {
+            foreach ($row['fields'] as $key => $value) {
                 if (!isset($arrayAttributes[$key]) && count($value) == 1) {
                     $row['fields'][$key] = reset($value);
                 }
@@ -334,7 +315,7 @@ class ActiveRecord extends BaseActiveRecord
 
         parent::populateRecord($record, $attributes);
 
-        $pk = static::primaryKey()[0];//TODO should always set ID in case of fields are not returned
+        $pk = static::primaryKey()[0]; //TODO should always set ID in case of fields are not returned
         if ($pk === '_id') {
             $record->_id = $row['_id'];
         }
@@ -360,8 +341,7 @@ class ActiveRecord extends BaseActiveRecord
      *  - `_index`: the index this record is stored in.
      * @return static the newly created active record
      */
-    public static function instantiate($row)
-    {
+    public static function instantiate($row) {
         return new static;
     }
 
@@ -415,8 +395,7 @@ class ActiveRecord extends BaseActiveRecord
      * By default the `op_type` is set to `create`.
      * @return boolean whether the attributes are valid and the record is inserted successfully.
      */
-    public function insert($runValidation = true, $attributes = null, $options = ['op_type' => 'create'])
-    {
+    public function insert($runValidation = true, $attributes = null, $options = ['op_type' => 'create']) {
         if ($runValidation && !$this->validate($attributes)) {
             return false;
         }
@@ -426,11 +405,7 @@ class ActiveRecord extends BaseActiveRecord
         $values = $this->getDirtyAttributes($attributes);
 
         $response = static::getDb()->createCommand()->insert(
-            static::index(),
-            static::type(),
-            $values,
-            $this->getPrimaryKey(),
-            $options
+            static::index(), static::type(), $values, $this->getPrimaryKey(), $options
         );
 
         $pk = static::primaryKey()[0];
@@ -483,9 +458,8 @@ class ActiveRecord extends BaseActiveRecord
      * @throws StaleObjectException if optimistic locking is enabled and the data being updated is outdated.
      * @throws InvalidParamException if no [[version]] is available and optimistic locking is enabled.
      * @throws Exception in case update failed.
-    */
-    public function update($runValidation = true, $attributeNames = null, $options = [])
-    {
+     */
+    public function update($runValidation = true, $attributeNames = null, $options = []) {
         if ($runValidation && !$this->validate($attributeNames)) {
             return false;
         }
@@ -503,8 +477,7 @@ class ActiveRecord extends BaseActiveRecord
      * @throws InvalidParamException if no [[version]] is available and optimistic locking is enabled.
      * @throws Exception in case update failed.
      */
-    protected function updateInternal($attributes = null, $options = [])
-    {
+    protected function updateInternal($attributes = null, $options = []) {
         if (!$this->beforeSave(false)) {
             return false;
         }
@@ -524,13 +497,9 @@ class ActiveRecord extends BaseActiveRecord
 
         try {
             $result = static::getDb()->createCommand()->update(
-                static::index(),
-                static::type(),
-                $this->getOldPrimaryKey(false),
-                $values,
-                $options
+                static::index(), static::type(), $this->getOldPrimaryKey(false), $values, $options
             );
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             // HTTP 409 is the response in case of failed optimistic locking
             // http://www.elastic.co/guide/en/elasticsearch/guide/current/optimistic-concurrency-control.html
             if (isset($e->errorInfo['responseCode']) && $e->errorInfo['responseCode'] == 409) {
@@ -571,11 +540,10 @@ class ActiveRecord extends BaseActiveRecord
      * @return integer the number of rows updated
      * @throws Exception on error.
      */
-    public static function updateAll($attributes, $condition = [])
-    {
+    public static function updateAll($attributes, $condition = []) {
         $pkName = static::primaryKey()[0];
         if (count($condition) == 1 && isset($condition[$pkName])) {
-            $primaryKeys = (array)$condition[$pkName];
+            $primaryKeys = (array) $condition[$pkName];
         } else {
             $primaryKeys = static::find()->where($condition)->column($pkName); // TODO check whether this works with default pk _id
         }
@@ -585,14 +553,14 @@ class ActiveRecord extends BaseActiveRecord
         $bulk = '';
         foreach ($primaryKeys as $pk) {
             $action = Json::encode([
-                "update" => [
-                    "_id" => $pk,
-                    "_type" => static::type(),
-                    "_index" => static::index(),
-                ],
+                    "update" => [
+                        "_id" => $pk,
+                        "_type" => static::type(),
+                        "_index" => static::index(),
+                    ],
             ]);
             $data = Json::encode([
-                "doc" => $attributes
+                    "doc" => $attributes
             ]);
             $bulk .= $action . "\n" . $data . "\n";
         }
@@ -631,11 +599,10 @@ class ActiveRecord extends BaseActiveRecord
      * @return integer the number of rows updated
      * @throws Exception on error.
      */
-    public static function updateAllCounters($counters, $condition = [])
-    {
+    public static function updateAllCounters($counters, $condition = []) {
         $pkName = static::primaryKey()[0];
         if (count($condition) == 1 && isset($condition[$pkName])) {
-            $primaryKeys = (array)$condition[$pkName];
+            $primaryKeys = (array) $condition[$pkName];
         } else {
             $primaryKeys = static::find()->where($condition)->column($pkName); // TODO check whether this works with default pk _id
         }
@@ -645,20 +612,20 @@ class ActiveRecord extends BaseActiveRecord
         $bulk = '';
         foreach ($primaryKeys as $pk) {
             $action = Json::encode([
-                "update" => [
-                    "_id" => $pk,
-                    "_type" => static::type(),
-                    "_index" => static::index(),
-                ],
+                    "update" => [
+                        "_id" => $pk,
+                        "_type" => static::type(),
+                        "_index" => static::index(),
+                    ],
             ]);
             $script = '';
             foreach ($counters as $counter => $value) {
                 $script .= "ctx._source.$counter += $counter;\n";
             }
             $data = Json::encode([
-                "script" => $script,
-                "params" => $counters,
-                "lang" => "groovy",
+                    "script" => $script,
+                    "params" => $counters,
+                    "lang" => "groovy",
             ]);
             $bulk .= $action . "\n" . $data . "\n";
         }
@@ -712,8 +679,7 @@ class ActiveRecord extends BaseActiveRecord
      * @throws StaleObjectException if optimistic locking is enabled and the data being deleted is outdated.
      * @throws Exception in case delete failed.
      */
-    public function delete($options = [])
-    {
+    public function delete($options = []) {
         if (!$this->beforeDelete()) {
             return false;
         }
@@ -727,12 +693,9 @@ class ActiveRecord extends BaseActiveRecord
 
         try {
             $result = static::getDb()->createCommand()->delete(
-                static::index(),
-                static::type(),
-                $this->getOldPrimaryKey(false),
-                $options
+                static::index(), static::type(), $this->getOldPrimaryKey(false), $options
             );
-        } catch(Exception $e) {
+        } catch (Exception $e) {
             // HTTP 409 is the response in case of failed optimistic locking
             // http://www.elastic.co/guide/en/elasticsearch/guide/current/optimistic-concurrency-control.html
             if (isset($e->errorInfo['responseCode']) && $e->errorInfo['responseCode'] == 409) {
@@ -767,11 +730,10 @@ class ActiveRecord extends BaseActiveRecord
      * @return integer the number of rows deleted
      * @throws Exception on error.
      */
-    public static function deleteAll($condition = [])
-    {
+    public static function deleteAll($condition = []) {
         $pkName = static::primaryKey()[0];
         if (count($condition) == 1 && isset($condition[$pkName])) {
-            $primaryKeys = (array)$condition[$pkName];
+            $primaryKeys = (array) $condition[$pkName];
         } else {
             $primaryKeys = static::find()->where($condition)->column($pkName); // TODO check whether this works with default pk _id
         }
@@ -781,12 +743,12 @@ class ActiveRecord extends BaseActiveRecord
         $bulk = '';
         foreach ($primaryKeys as $pk) {
             $bulk .= Json::encode([
-                "delete" => [
-                    "_id" => $pk,
-                    "_type" => static::type(),
-                    "_index" => static::index(),
-                ],
-            ]) . "\n";
+                    "delete" => [
+                        "_id" => $pk,
+                        "_type" => static::type(),
+                        "_index" => static::index(),
+                    ],
+                ]) . "\n";
         }
 
         // TODO do this via command
@@ -816,8 +778,7 @@ class ActiveRecord extends BaseActiveRecord
      * Elasticsearch ActiveRecord uses [native Optimistic locking](http://www.elastic.co/guide/en/elasticsearch/guide/current/optimistic-concurrency-control.html).
      * See [[update()]] for more details.
      */
-    public function optimisticLock()
-    {
+    public function optimisticLock() {
         return null;
     }
 
@@ -826,8 +787,8 @@ class ActiveRecord extends BaseActiveRecord
      *
      * This method is not supported by elasticsearch.
      */
-    public function unlinkAll($name, $delete = false)
-    {
+    public function unlinkAll($name, $delete = false) {
         throw new NotSupportedException('unlinkAll() is not supported by elasticsearch, use unlink() instead.');
     }
+
 }
